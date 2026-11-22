@@ -14,8 +14,7 @@ textarea{width:100%;min-height:200px;padding:12px;font-size:16px;border:1px soli
 .row{margin:12px 0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer}
 #link{width:100%;padding:10px;margin-top:12px}
-#text{line-height:1.7;word-break:break-word}
-#text div{min-height:1.2em;white-space:pre-wrap}
+#text{line-height:1.7;word-break:break-word;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -36,7 +35,6 @@ button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius
 <script>
 var enc=s=>btoa(unescape(encodeURIComponent(s))),dec=s=>decodeURIComponent(escape(atob(s)));
 var F={sans:"sans-serif",serif:"serif",mono:"monospace"};
-function garble(n){var a="",i=0;for(;i<n;i++)a+=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));return a;}
 var h=location.hash;
 if(h.slice(0,3)==="#d="){
  document.getElementById("editor").classList.add("hidden");
@@ -46,12 +44,28 @@ if(h.slice(0,3)==="#d="){
  t.style.fontFamily=F[o.f]||F.sans;
  t.style.fontSize=(o.z||18)+"px";
  t.style.maxWidth=o.r?"100%":"720px";
- var s=(o.s||10)*1000,g=(o.g||3)*1000;
- o.t.split("\n").forEach(function(line,i){
-  var d=document.createElement("div");
-  d.textContent=line;
-  t.appendChild(d);
-  setTimeout(function(){d.textContent=garble(line.length);},s+i*g);
+ var s=(o.s==null?10:o.s)*1000,g=(o.g==null?3:o.g)*1000;
+ var spans=[];
+ Array.from(o.t).forEach(function(ch){
+  if(ch==="\n")t.appendChild(document.createElement("br"));
+  else{var sp=document.createElement("span");sp.textContent=ch;t.appendChild(sp);spans.push(sp);}
+ });
+ var groups=[],cur=null;
+ spans.forEach(function(sp){
+  var top=sp.getBoundingClientRect().top;
+  if(!cur||Math.abs(top-cur.top)>1){cur={top:top,els:[]};groups.push(cur);}
+  cur.els.push(sp);
+ });
+ groups.forEach(function(grp,k){
+  setTimeout(function(){
+   grp.els.forEach(function(sp){
+    var c=sp.textContent.codePointAt(0);
+    if(c===32)return;
+    if(c>=0x4e00&&c<=0x9fff)sp.textContent=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));
+    else if(c>=0x20&&c<=0x7e)sp.textContent=String.fromCharCode(0x21+Math.floor(Math.random()*0x5e));
+    else sp.textContent=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));
+   });
+  },s+k*g);
  });
 }else{
  document.getElementById("gen").onclick=function(){
