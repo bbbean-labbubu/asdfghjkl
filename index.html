@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>阅读</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,sans-serif;background:#f5f5f5;min-height:100vh;color:#111}
+.hidden{display:none}
+#editor,#reader{padding:24px;max-width:960px;margin:0 auto}
+h1{font-size:20px;margin-bottom:16px}
+textarea{width:100%;min-height:200px;padding:12px;font-size:16px;border:1px solid #ccc;border-radius:6px}
+.row{margin:12px 0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer}
+#link{width:100%;padding:10px;margin-top:12px}
+#text{line-height:1.7;white-space:pre-wrap;word-break:break-word}
+</style>
+</head>
+<body>
+<div id="editor">
+<h1>发布文本</h1>
+<textarea id="src" placeholder="在此输入文本..."></textarea>
+<div class="row">
+<label>字体 <select id="font"><option value="sans">无衬线</option><option value="serif">衬线</option><option value="mono">等宽</option></select></label>
+<label>字号 <input id="size" type="number" value="18" min="10" max="72"> px</label>
+<label><input id="resp" type="checkbox" checked> 屏幕自适应</label>
+<label>变乱码前秒数 <input id="sec" type="number" value="10" min="1"> 秒</label>
+</div>
+<div class="row"><button id="gen">生成链接</button><button id="copy">复制链接</button></div>
+<input id="link" readonly placeholder="生成的链接会显示在这里">
+</div>
+<div id="reader" class="hidden"><div id="text"></div></div>
+<script>
+var enc=s=>btoa(unescape(encodeURIComponent(s))),dec=s=>decodeURIComponent(escape(atob(s)));
+var F={sans:"sans-serif",serif:"serif",mono:"monospace"};
+var h=location.hash;
+if(h.slice(0,3)==="#d="){
+ document.getElementById("editor").classList.add("hidden");
+ document.getElementById("reader").classList.remove("hidden");
+ var o=JSON.parse(dec(h.slice(3)));
+ var t=document.getElementById("text");
+ t.textContent=o.t;
+ t.style.fontFamily=F[o.f]||F.sans;
+ t.style.fontSize=(o.z||18)+"px";
+ t.style.maxWidth=o.r?"100%":"720px";
+ function garble(n){var a="",i=0;for(;i<n;i++)a+=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));return a;}
+ setTimeout(function(){t.textContent=garble(o.t.length);},(o.s||10)*1000);
+}else{
+ document.getElementById("gen").onclick=function(){
+  var o={t:document.getElementById("src").value,f:document.getElementById("font").value,z:+document.getElementById("size").value,r:document.getElementById("resp").checked,s:+document.getElementById("sec").value};
+  var u=location.href.split("#")[0]+"#d="+enc(JSON.stringify(o));
+  document.getElementById("link").value=u;
+ };
+ document.getElementById("copy").onclick=function(){
+  var l=document.getElementById("link").value;
+  if(l)navigator.clipboard.writeText(l);
+ };
+}
+</script>
+</body>
+</html>
