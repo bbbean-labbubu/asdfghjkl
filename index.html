@@ -14,7 +14,8 @@ textarea{width:100%;min-height:200px;padding:12px;font-size:16px;border:1px soli
 .row{margin:12px 0;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
 button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer}
 #link{width:100%;padding:10px;margin-top:12px}
-#text{line-height:1.7;white-space:pre-wrap;word-break:break-word}
+#text{line-height:1.7;word-break:break-word}
+#text div{min-height:1.2em;white-space:pre-wrap}
 </style>
 </head>
 <body>
@@ -25,7 +26,8 @@ button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius
 <label>字体 <select id="font"><option value="sans">无衬线</option><option value="serif">衬线</option><option value="mono">等宽</option></select></label>
 <label>字号 <input id="size" type="number" value="18" min="10" max="72"> px</label>
 <label><input id="resp" type="checkbox" checked> 屏幕自适应</label>
-<label>变乱码前秒数 <input id="sec" type="number" value="10" min="1"> 秒</label>
+<label>首行延迟 <input id="sec" type="number" value="10" min="0"> 秒</label>
+<label>行间隔 <input id="gap" type="number" value="3" min="0"> 秒</label>
 </div>
 <div class="row"><button id="gen">生成链接</button><button id="copy">复制链接</button></div>
 <input id="link" readonly placeholder="生成的链接会显示在这里">
@@ -34,21 +36,26 @@ button{background:#2563eb;color:#fff;border:none;padding:10px 20px;border-radius
 <script>
 var enc=s=>btoa(unescape(encodeURIComponent(s))),dec=s=>decodeURIComponent(escape(atob(s)));
 var F={sans:"sans-serif",serif:"serif",mono:"monospace"};
+function garble(n){var a="",i=0;for(;i<n;i++)a+=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));return a;}
 var h=location.hash;
 if(h.slice(0,3)==="#d="){
  document.getElementById("editor").classList.add("hidden");
  document.getElementById("reader").classList.remove("hidden");
  var o=JSON.parse(dec(h.slice(3)));
  var t=document.getElementById("text");
- t.textContent=o.t;
  t.style.fontFamily=F[o.f]||F.sans;
  t.style.fontSize=(o.z||18)+"px";
  t.style.maxWidth=o.r?"100%":"720px";
- function garble(n){var a="",i=0;for(;i<n;i++)a+=String.fromCharCode(0x4e00+Math.floor(Math.random()*0x3000));return a;}
- setTimeout(function(){t.textContent=garble(o.t.length);},(o.s||10)*1000);
+ var s=(o.s||10)*1000,g=(o.g||3)*1000;
+ o.t.split("\n").forEach(function(line,i){
+  var d=document.createElement("div");
+  d.textContent=line;
+  t.appendChild(d);
+  setTimeout(function(){d.textContent=garble(line.length);},s+i*g);
+ });
 }else{
  document.getElementById("gen").onclick=function(){
-  var o={t:document.getElementById("src").value,f:document.getElementById("font").value,z:+document.getElementById("size").value,r:document.getElementById("resp").checked,s:+document.getElementById("sec").value};
+  var o={t:document.getElementById("src").value,f:document.getElementById("font").value,z:+document.getElementById("size").value,r:document.getElementById("resp").checked,s:+document.getElementById("sec").value,g:+document.getElementById("gap").value};
   var u=location.href.split("#")[0]+"#d="+enc(JSON.stringify(o));
   document.getElementById("link").value=u;
  };
